@@ -22,11 +22,6 @@ abstract class Manager
     protected $managerRegistry;
 
     /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
      * @var string
      */
     protected $class;
