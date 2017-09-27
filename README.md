@@ -31,7 +31,7 @@ class YourManager extends Manager
 }
 ```
 
-if you want code completion or need to do some other stuff you can override the crud method like so:
+if you want code completion or need to do some other stuff you can override the CRUD methods like so:
 
 ```php
 <?php
