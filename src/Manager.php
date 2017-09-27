@@ -5,16 +5,22 @@ namespace Loevgaard\DoctrineManager;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
-use Doctrine\Common\Util\ClassUtils;
 
 /**
  * @method null|object find($id)
  * @method array findBy(array $criteria, array $orderBy = null, int $limit = null, int $offset = null)
  * @method null|object findOneBy(array $criteria)
  * @method array findAll()
+ * @method object persist($object)
+ * @method flush()
  */
 abstract class Manager
 {
+    /**
+     * @var ManagerRegistry
+     */
+    protected $managerRegistry;
+
     /**
      * @var ObjectManager
      */
@@ -25,38 +31,63 @@ abstract class Manager
      */
     protected $class;
 
-    public function __construct(ManagerRegistry $registry, $class)
+    public function __construct(ManagerRegistry $registry, string $class)
     {
-        $this->setClass($class);
-        $this->objectManager = $registry->getManagerForClass($this->class);
+        $this->managerRegistry = $registry;
+        $this->class = $class;
+    }
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (method_exists($this->getRepository(), $name)) {
+            return call_user_func_array([$this->getRepository(), $name], $arguments);
+        }
+        if (method_exists($this->getObjectManager(), $name)) {
+            return call_user_func_array([$this->getObjectManager(), $name], $arguments);
+        }
     }
 
     /**
      * @return ObjectRepository
      */
-    public function getRepository()
+    public function getRepository() : ObjectRepository
     {
-        return $this->objectManager->getRepository($this->getClass());
+        return $this->getObjectManager()->getRepository($this->getClass());
+    }
+
+    /**
+     * @return ObjectManager
+     */
+    public function getObjectManager() : ObjectManager
+    {
+        return $this->managerRegistry->getManagerForClass($this->class);
     }
 
     /**
      * @param string $class
      * @return Manager
      */
-    public function setClass($class) {
-        if (false !== strpos($this->class, ':')) {
-            $metadata = $this->objectManager->getClassMetadata($this->class);
-            $class = $metadata->getName();
-        }
-        $this->class = ClassUtils::getRealClass($class);
+    public function setClass(string $class) : Manager
+    {
+        $this->class = $class;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getClass()
+    public function getClass() : string
     {
+        if (false !== strpos($this->class, ':')) {
+            $metadata = $this->getObjectManager()->getClassMetadata($this->class);
+            $this->class = $metadata->getName();
+        }
+
         return $this->class;
     }
 
@@ -67,8 +98,7 @@ abstract class Manager
      */
     public function create()
     {
-        $class = $this->getClass();
-        $obj = new $class();
+        $obj = new $this->class();
         return $obj;
     }
 
@@ -77,8 +107,8 @@ abstract class Manager
      */
     public function delete($obj)
     {
-        $this->objectManager->remove($obj);
-        $this->objectManager->flush();
+        $this->getObjectManager()->remove($obj);
+        $this->getObjectManager()->flush();
     }
 
     /**
@@ -89,25 +119,10 @@ abstract class Manager
      */
     public function update($obj, $flush = true)
     {
-        $this->objectManager->persist($obj);
+        $this->getObjectManager()->persist($obj);
 
-        if($flush) {
-            $this->objectManager->flush();
-        }
-    }
-
-    /**
-     * @param string $name
-     * @param array $arguments
-     * @return mixed
-     */
-    public function __call($name, $arguments)
-    {
-        if(method_exists($this->getRepository(), $name)) {
-            return call_user_func_array([$this->getRepository(), $name], $arguments);
-        }
-        if(method_exists($this->objectManager, $name)) {
-            return call_user_func_array([$this->objectManager, $name], $arguments);
+        if ($flush) {
+            $this->getObjectManager()->flush();
         }
     }
 }
