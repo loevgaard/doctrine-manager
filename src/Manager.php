@@ -109,9 +109,5 @@ abstract class Manager
         if(method_exists($this->objectManager, $name)) {
             return call_user_func_array([$this->objectManager, $name], $arguments);
         }
-        if(!method_exists($this, $name) && in_array($name, ['create', 'update', 'delete', 'find', 'findBy', 'findOneBy', 'findAll'])) {
-            $name = '_'.$name;
-            return call_user_func_array([$this, $name], $arguments);
-        }
     }
 }
