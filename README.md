@@ -19,7 +19,52 @@ $ composer require loevgaard/doctrine-manager
 
 ## Usage
 
-TODO
+Say you have an Entity named `YourEntity` then you will create a manager as easy as:
+
+```php
+<?php
+namespace Loevgaard\DoctrineManager;
+
+class YourManager extends Manager
+{
+    
+}
+```
+
+if you want code completion or need to do some other stuff you can override the crud method like so:
+
+```php
+<?php
+namespace Loevgaard\DoctrineManager;
+
+class YourManager extends Manager
+{
+    /**
+     * @return YourEntity
+     */
+    public function create()
+    {
+        return parent::create();
+    }
+
+    /**
+     * @param YourEntity $obj
+     */
+    public function delete($obj)
+    {
+        parent::delete($obj);
+    }
+
+    /**
+     * @param YourEntity $obj
+     * @param bool $flush
+     */
+    public function update($obj, $flush = true)
+    {
+        parent::update($obj, $flush);
+    }
+}
+```
 
 ## Change log
 
